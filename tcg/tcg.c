@@ -6878,7 +6878,9 @@ int tcg_gen_code(TCGContext *s, TranslationBlock *tb, uint64_t pc_start)
     /* Do not reuse any EBB that may be allocated within the TB. */
     tcg_temp_ebb_reset_freed(s);
 
+#ifdef TCG_OPTIMIZATION
     tcg_optimize(s);
+#endif
 
     reachable_code_pass(s);
     liveness_pass_0(s);

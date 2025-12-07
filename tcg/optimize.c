@@ -1052,7 +1052,9 @@ static bool fold_masks_zosa_int(OptContext *ctx, TCGOp *op,
     TCGTemp *ts;
     TempOptInfo *ti;
     int rep;
-
+#ifdef SET_SMASK_DEFAULT
+    s_mask = 0;
+#endif
     /* Only single-output opcodes are supported here. */
     tcg_debug_assert(def->nb_oargs == 1);
 
