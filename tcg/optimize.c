@@ -1055,6 +1055,10 @@ static bool fold_masks_zosa_int(OptContext *ctx, TCGOp *op,
 #ifdef SET_SMASK_DEFAULT
     s_mask = 0;
 #endif
+
+#ifdef PRINT_MASKS
+    printf("fold_masks_zosa_int: z: %lx o: %lx s: %lx a: %lx \n", z_mask, o_mask, s_mask, a_mask);
+#endif
     /* Only single-output opcodes are supported here. */
     tcg_debug_assert(def->nb_oargs == 1);
 
