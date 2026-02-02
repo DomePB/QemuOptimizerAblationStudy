@@ -984,6 +984,10 @@ static bool finish_folding(OptContext *ctx, TCGOp *op)
     const TCGOpDef *def = &tcg_op_defs[op->opc];
     int i, nb_oargs;
 
+    #ifdef PRINT_MASKS
+    printf("finish_folding: op: %s\n", def->name);
+#endif
+
     nb_oargs = def->nb_oargs;
     for (i = 0; i < nb_oargs; i++) {
         TCGTemp *ts = arg_temp(op->args[i]);
@@ -1057,7 +1061,7 @@ static bool fold_masks_zosa_int(OptContext *ctx, TCGOp *op,
 #endif
 
 #ifdef PRINT_MASKS
-    printf("fold_masks_zosa_int: z: %lx o: %lx s: %lx a: %lx \n", z_mask, o_mask, s_mask, a_mask);
+    printf("fold_masks_zosa_int: op: %s z: %lx o: %lx s: %lx a: %lx \n", def->name, z_mask, o_mask, s_mask, a_mask);
 #endif
     /* Only single-output opcodes are supported here. */
     tcg_debug_assert(def->nb_oargs == 1);
