@@ -21,8 +21,8 @@
 #define ASPEED_I2C_H
 
 #include "hw/i2c/i2c.h"
-#include "hw/sysbus.h"
-#include "hw/registerfields.h"
+#include "hw/core/sysbus.h"
+#include "hw/core/registerfields.h"
 #include "qom/object.h"
 
 #define TYPE_ASPEED_I2C "aspeed.i2c"
@@ -252,6 +252,7 @@ struct AspeedI2CBus {
     MemoryRegion mr_pool;
 
     I2CBus *bus;
+    char *name;
     uint8_t id;
     qemu_irq irq;
 
@@ -269,6 +270,7 @@ struct AspeedI2CState {
     uint32_t intr_status;
     uint32_t ctrl_global;
     uint32_t new_clk_divider;
+    char *bus_label;
     MemoryRegion pool_iomem;
     uint8_t share_pool[ASPEED_I2C_SHARE_POOL_SIZE];
 

@@ -20,12 +20,12 @@
 #include "exec/memop.h"
 #include "standard-headers/linux/virtio_pci.h"
 #include "standard-headers/linux/virtio_ids.h"
-#include "hw/boards.h"
+#include "hw/core/boards.h"
 #include "hw/virtio/virtio.h"
 #include "migration/qemu-file-types.h"
 #include "hw/pci/pci.h"
 #include "hw/pci/pci_bus.h"
-#include "hw/qdev-properties.h"
+#include "hw/core/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
 #include "qemu/log.h"
@@ -33,7 +33,7 @@
 #include "qemu/bswap.h"
 #include "hw/pci/msi.h"
 #include "hw/pci/msix.h"
-#include "hw/loader.h"
+#include "hw/core/loader.h"
 #include "system/accel-irq.h"
 #include "system/kvm.h"
 #include "hw/virtio/virtio-pci.h"
@@ -2183,15 +2183,17 @@ static void virtio_pci_device_plugged(DeviceState *d, Error **errp)
                          PCI_BASE_ADDRESS_SPACE_IO, &proxy->bar);
     }
 
-    if (pci_is_vf(&proxy->pci_dev)) {
-        pcie_ari_init(&proxy->pci_dev, proxy->last_pcie_cap_offset);
-        proxy->last_pcie_cap_offset += PCI_ARI_SIZEOF;
-    } else {
-        res = pcie_sriov_pf_init_from_user_created_vfs(
-            &proxy->pci_dev, proxy->last_pcie_cap_offset, errp);
-        if (res > 0) {
-            proxy->last_pcie_cap_offset += res;
-            virtio_add_feature(&vdev->host_features, VIRTIO_F_SR_IOV);
+    if (pci_is_express(&proxy->pci_dev)) {
+        if (pci_is_vf(&proxy->pci_dev)) {
+            pcie_ari_init(&proxy->pci_dev, proxy->last_pcie_cap_offset);
+            proxy->last_pcie_cap_offset += PCI_ARI_SIZEOF;
+        } else {
+            res = pcie_sriov_pf_init_from_user_created_vfs(
+                &proxy->pci_dev, proxy->last_pcie_cap_offset, errp);
+            if (res > 0) {
+                proxy->last_pcie_cap_offset += res;
+                virtio_add_feature(&vdev->host_features, VIRTIO_F_SR_IOV);
+            }
         }
     }
 }

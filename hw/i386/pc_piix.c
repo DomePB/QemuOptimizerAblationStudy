@@ -35,13 +35,13 @@
 #include "hw/display/ramfb.h"
 #include "hw/pci/pci.h"
 #include "hw/pci/pci_ids.h"
-#include "hw/usb.h"
+#include "hw/usb/usb.h"
 #include "net/net.h"
 #include "hw/ide/pci.h"
-#include "hw/irq.h"
+#include "hw/core/irq.h"
 #include "system/kvm.h"
 #include "hw/i386/kvm/clock.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 #include "hw/i2c/smbus_eeprom.h"
 #include "system/memory.h"
 #include "hw/acpi/acpi.h"
@@ -320,16 +320,6 @@ static void pc_init1(MachineState *machine, const char *pci_type)
                                x86_nvdimm_acpi_dsmio,
                                x86ms->fw_cfg, OBJECT(pcms));
     }
-
-#if defined(CONFIG_IGVM)
-    /* Apply guest state from IGVM if supplied */
-    if (x86ms->igvm) {
-        if (IGVM_CFG_GET_CLASS(x86ms->igvm)
-                ->process(x86ms->igvm, machine->cgs, false, &error_fatal) < 0) {
-            g_assert_not_reached();
-        }
-    }
-#endif
 }
 
 typedef enum PCSouthBridgeOption {
@@ -438,12 +428,21 @@ static void pc_i440fx_machine_options(MachineClass *m)
                      pc_piix_compat_defaults, pc_piix_compat_defaults_len);
 }
 
-static void pc_i440fx_machine_10_2_options(MachineClass *m)
+static void pc_i440fx_machine_11_0_options(MachineClass *m)
 {
     pc_i440fx_machine_options(m);
 }
 
-DEFINE_I440FX_MACHINE_AS_LATEST(10, 2);
+DEFINE_I440FX_MACHINE_AS_LATEST(11, 0);
+
+static void pc_i440fx_machine_10_2_options(MachineClass *m)
+{
+    pc_i440fx_machine_11_0_options(m);
+    compat_props_add(m->compat_props, hw_compat_10_2, hw_compat_10_2_len);
+    compat_props_add(m->compat_props, pc_compat_10_2, pc_compat_10_2_len);
+}
+
+DEFINE_I440FX_MACHINE(10, 2);
 
 static void pc_i440fx_machine_10_1_options(MachineClass *m)
 {

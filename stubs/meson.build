@@ -41,6 +41,8 @@ if have_block or have_ga
   stub_ss.add(files('monitor-internal.c'))
   stub_ss.add(files('qmp-command-available.c'))
   stub_ss.add(files('qmp-quit.c'))
+  stub_ss.add(files('async-run-on-cpu.c'))
+  stub_ss.add(files('cpus-queue.c'))
 endif
 
 if have_block or have_user
@@ -59,8 +61,6 @@ if have_user
   if not have_system
     stub_ss.add(files('qdev.c'))
   endif
-
-  stub_ss.add(files('monitor-internal.c'))
 endif
 
 if have_system
@@ -71,7 +71,9 @@ if have_system
   stub_ss.add(files('dump.c'))
   stub_ss.add(files('cmos.c'))
   stub_ss.add(files('fw_cfg.c'))
-  stub_ss.add(files('igvm.c'))
+  if igvm.found()
+    stub_ss.add(files('igvm.c'))
+  endif
   stub_ss.add(files('target-get-monitor-def.c'))
   stub_ss.add(files('target-monitor-defs.c'))
   stub_ss.add(files('win32-kbd-hook.c'))

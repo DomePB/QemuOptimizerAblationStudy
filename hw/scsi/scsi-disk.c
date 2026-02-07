@@ -36,8 +36,8 @@
 #include "system/block-backend.h"
 #include "system/blockdev.h"
 #include "hw/block/block.h"
-#include "hw/qdev-properties.h"
-#include "hw/qdev-properties-system.h"
+#include "hw/core/qdev-properties.h"
+#include "hw/core/qdev-properties-system.h"
 #include "system/dma.h"
 #include "system/system.h"
 #include "qemu/cutils.h"
@@ -117,7 +117,7 @@ struct SCSIDiskState {
      * 0x0000        - rotation rate not reported
      * 0x0001        - non-rotating medium (SSD)
      * 0x0002-0x0400 - reserved
-     * 0x0401-0xffe  - rotations per minute
+     * 0x0401-0xfffe - rotations per minute
      * 0xffff        - reserved
      */
     uint16_t rotation_rate;
