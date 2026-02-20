@@ -980,8 +980,9 @@ static bool fold_masks_zosa_int(OptContext *ctx, TCGOp *op,
 
     ti = ts_info(ts);
     ti->z_mask = z_mask;
+#ifdef O_MASK_FIX
     ti->o_mask = o_mask;
-
+#endif
     /* Canonicalize s_mask and incorporate data from [zo]_mask. */
     rep = clz64(~s_mask);
     rep = MAX(rep, clz64(z_mask));
