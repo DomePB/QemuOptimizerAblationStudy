@@ -942,9 +942,6 @@ static bool fold_masks_zosa_int(OptContext *ctx, TCGOp *op,
     s_mask = 0;
 #endif
 
-#ifdef PRINT_MASKS
-    printf("fold_masks_zosa_int: op: %s z: %lx o: %lx s: %lx a: %lx \n", def->name, z_mask, o_mask, s_mask, a_mask);
-#endif
     /* Only single-output opcodes are supported here. */
     tcg_debug_assert(def->nb_oargs == 1);
 
@@ -965,6 +962,17 @@ static bool fold_masks_zosa_int(OptContext *ctx, TCGOp *op,
     /* Bits that are known 1 and bits that are known 0 must not overlap. */
     tcg_debug_assert((o_mask & ~z_mask) == 0);
 
+    /* Canonicalize s_mask and incorporate data from [zo]_mask. */
+    rep = clz64(~s_mask); // 0-64
+    rep = MAX(rep, clz64(z_mask));
+    rep = MAX(rep, clz64(~o_mask));
+    rep = MAX(rep - 1, 0); // 0 - 63
+    s_mask = INT64_MIN >> rep;
+
+#ifdef PRINT_MASKS
+    printf("fold_masks_zosa_int: op: %s z: %lx o: %lx s: %lx a: %lx \n", def->name, z_mask, o_mask, s_mask, a_mask);
+#endif
+
     /* All bits that are not known zero are known one is a constant. */
     if (z_mask == o_mask) {
         return tcg_opt_gen_movi(ctx, op, op->args[0], o_mask);
@@ -983,12 +991,7 @@ static bool fold_masks_zosa_int(OptContext *ctx, TCGOp *op,
 #ifdef O_MASK_FIX
     ti->o_mask = o_mask;
 #endif
-    /* Canonicalize s_mask and incorporate data from [zo]_mask. */
-    rep = clz64(~s_mask);
-    rep = MAX(rep, clz64(z_mask));
-    rep = MAX(rep, clz64(~o_mask));
-    rep = MAX(rep - 1, 0);
-    ti->s_mask = INT64_MIN >> rep;
+    ti->s_mask = s_mask;
 
     return false;
 }
@@ -1146,6 +1149,37 @@ static bool fold_add(OptContext *ctx, TCGOp *op)
         fold_xi_to_x(ctx, op, 0)) {
         return true;
     }
+
+    #ifdef ADD_PATCH
+    TempOptInfo *t1, *t2;
+    t1 = arg_info(op->args[1]);
+    t2 = arg_info(op->args[2]);
+
+    uint64_t z_mask, o_mask, s_mask, t1_unknowns, t2_unknowns;
+    uint64_t sum_ones, sum_unknowns, all_carries, ones_carries, unknowns;
+    s_mask = (t1->s_mask & t2->s_mask) << 1;
+
+    // compute z_mask and o_mask following the approach of "Sound, Precise, and
+    // Fast Abstract Interpretation with Tristate Numbers" (also used in the
+    // ebpf jit in the linux kernel)
+    // https://arxiv.org/abs/2105.05398
+    // see also https://pypy.org/posts/2024/08/toy-knownbits.html
+    sum_ones = t1->o_mask + t2->o_mask;
+    t1_unknowns = t1->o_mask ^ t1->z_mask;
+    t2_unknowns = t2->o_mask ^ t2->z_mask;
+
+    sum_unknowns = t1_unknowns + t2_unknowns;
+    all_carries = sum_ones + sum_unknowns;
+    ones_carries = all_carries ^ sum_ones;
+    unknowns = t1_unknowns | t2_unknowns | ones_carries;
+    o_mask = sum_ones & ~unknowns;
+    z_mask = o_mask ^ unknowns;
+
+    if (fold_masks_zos(ctx, op, z_mask, o_mask, s_mask)) {
+        return true;
+    }
+    #endif
+
     return finish_folding(ctx, op);
 }
 
